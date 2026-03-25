@@ -352,14 +352,16 @@ function renderTournament() {
   const match = getCurrentMatch();
   const totalRounds = state.rounds.length;
 
-  // Header round label
-  $('round-label').textContent = getRoundName(state.currentRound, totalRounds);
+  // Header round label + prominent banner
+  const roundName = getRoundName(state.currentRound, totalRounds);
+  $('round-label').textContent      = roundName;
+  $('round-banner-text').textContent = roundName;
 
   // Progress
   const done  = state.completedMatches;
   const total = state.totalMatches;
   $('progress-text').textContent  = `Match ${done + 1} of ${total}`;
-  $('progress-round').textContent = getRoundName(state.currentRound, totalRounds);
+  $('progress-round').textContent = `${total - done} match${total - done !== 1 ? 'es' : ''} left`;
   $('progress-bar-fill').style.width = total > 0 ? `${(done / total) * 100}%` : '0%';
 
   // Active match

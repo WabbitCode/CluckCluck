@@ -311,6 +311,26 @@ body {
   transition: width 0.5s ease;
 }
 
+/* Round banner */
+.round-banner {
+  margin: 4px 16px 0;
+  display: flex;
+  justify-content: center;
+}
+.round-banner span {
+  display: inline-block;
+  background: linear-gradient(135deg, #9C6DD1, #C87FB5 50%, #E493A0);
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 10px 36px;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(156,109,209,0.4);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  text-transform: uppercase;
+}
+
 /* Active match */
 .active-match-section {
   margin: 0 16px;
