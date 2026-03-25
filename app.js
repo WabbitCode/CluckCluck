@@ -328,7 +328,7 @@ function showWinnerScreen(champion) {
 function launchConfetti() {
   const container = $('confetti-container');
   container.innerHTML = '';
-  const colors = ['#CE93D8','#F48FB1','#A5D6A7','#90CAF9','#FFF176','#FFFFFF','#EF9A9A','#80DEEA','#FFCC80'];
+  const colors = ['#1565C0','#42A5F5','#80DEEA','#90CAF9','#BBDEFB','#FFFFFF','#64B5F6','#00ACC1','#E3F2FD'];
 
   for (let i = 0; i < 120; i++) {
     const piece = document.createElement('div');
