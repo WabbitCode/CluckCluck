@@ -14,6 +14,7 @@ const state = {
   completedMatches: 0,
   status: 'setup',    // 'setup' | 'playing' | 'done'
   history: [],
+  rollScores: null,   // set after egg roll; null = not yet rolled
 };
 
 const STORAGE_KEY = 'cluckcluck_save';
@@ -59,7 +60,9 @@ function setupAddPlayer() {
 }
 
 function removePlayer(id) {
-  state.players = state.players.filter(p => p.id !== id);
+  state.players    = state.players.filter(p => p.id !== id);
+  state.rollScores = null;
+  $('egg-roll-section').classList.add('hidden');
   renderPlayerList();
   saveState();
 }
@@ -69,47 +72,117 @@ function shufflePlayers() {
     const j = Math.floor(Math.random() * (i + 1));
     [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
   }
+  state.rollScores = null;
   renderPlayerList();
 }
 
-function renderPlayerList() {
+// ── Egg Roll (bye seeding) ──────────────────────────────────
+function doEggRoll() {
+  const n    = state.players.length;
+  const size = nextPowerOf2(n);
+  const byes = size - n;
+
+  if (byes === 0) return; // no byes needed, nothing to roll for
+
+  // Assign random scores 1–100 to each player (no ties via tiebreak)
+  const scores = state.players.map((p, i) => ({
+    idx: i,
+    score: Math.floor(Math.random() * 100) + 1 + (Math.random() * 0.99),
+  }));
+
+  // Animate: rapidly shuffle visible scores, then settle
+  $('btn-egg-roll').disabled = true;
+  $('btn-reroll').disabled   = true;
+  $('btn-start').disabled    = true;
+
+  let flashes = 0;
+  const maxFlashes = 14;
+  const interval = setInterval(() => {
+    // Show scrambled scores while animating
+    const temp = scores.map(s => ({ ...s, score: Math.floor(Math.random() * 100) + 1 }));
+    renderPlayerListWithScores(temp, byes);
+    flashes++;
+    if (flashes >= maxFlashes) {
+      clearInterval(interval);
+      // Settle on real scores, sort descending
+      scores.sort((a, b) => b.score - a.score);
+      // Reorder players: top scorers first (they'll get byes), then rest
+      const byePlayers  = scores.slice(0, byes).map(s => state.players[s.idx]);
+      const restPlayers = scores.slice(byes).map(s => state.players[s.idx]);
+      state.players     = [...restPlayers, ...byePlayers];
+      state.rollScores  = scores; // store for display
+      renderPlayerListWithScores(scores, byes);
+      $('egg-roll-section').classList.remove('hidden');
+      $('btn-egg-roll').disabled = false;
+      $('btn-reroll').disabled   = false;
+      $('btn-start').disabled    = false;
+    }
+  }, 80);
+}
+
+function renderPlayerListWithScores(scores, byeCount) {
+  // Build a name→score map using the current player order
+  const scoreMap = {};
+  scores.forEach(s => {
+    scoreMap[state.players[s.idx]?.name] = Math.round(s.score);
+  });
+  // Re-render with scores; bye players are the LAST byeCount in state.players
+  renderPlayerList(byeCount, scoreMap);
+}
+
+function renderPlayerList(byeCount = 0, scoreMap = null) {
   const list  = $('player-list');
   const count = state.players.length;
   $('player-count').textContent = count;
-  $('btn-shuffle').disabled   = count < 2;
-  $('btn-clear-all').disabled = count === 0;
-  $('btn-start').disabled     = count < 2;
+  $('btn-shuffle').disabled        = count < 2;
+  $('btn-clear-all').disabled      = count === 0;
+  $('btn-egg-roll').disabled       = count < 2;
+
+  // Only enable start if rolled (when byes exist) or no byes needed
+  const size = nextPowerOf2(count);
+  const byes = size - count;
+  const needsRoll = byes > 0 && !state.rollScores;
+  $('btn-start').disabled = count < 2 || needsRoll;
 
   if (count === 0) {
     list.innerHTML = '<li class="empty-state">No contestants yet. Add some above!</li>';
     $('bracket-info').classList.add('hidden');
+    $('egg-roll-section').classList.add('hidden');
     return;
   }
 
-  list.innerHTML = state.players.map((p, i) => `
-    <li class="player-item">
+  // Bye players are the last `byeCount` in the current order
+  list.innerHTML = state.players.map((p, i) => {
+    const hasBye  = byeCount > 0 && i >= state.players.length - byeCount;
+    const score   = scoreMap ? scoreMap[p.name] : null;
+    const liClass = hasBye ? 'player-item has-bye' : 'player-item';
+    return `
+    <li class="${liClass}">
       <span class="player-seed">#${i + 1}</span>
       <span class="player-emoji">${p.emoji}</span>
       <span class="player-name">${escHtml(p.name)}</span>
+      ${score !== null ? `<span class="roll-score">🥚${score}</span>` : ''}
+      ${hasBye ? `<span class="bye-badge">BYE 🎟️</span>` : ''}
       <button class="btn-remove" data-id="${p.id}" title="Remove">✕</button>
-    </li>`).join('');
+    </li>`;
+  }).join('');
 
   list.querySelectorAll('.btn-remove').forEach(btn => {
     btn.addEventListener('click', () => removePlayer(btn.dataset.id));
   });
 
   // Bracket info preview
-  const total  = count;
-  const size   = nextPowerOf2(total);
-  const byes   = size - total;
   const rounds = Math.log2(size);
   const info   = $('bracket-info');
   info.classList.remove('hidden');
   info.innerHTML = `
-    🥚 <strong>${total}</strong> contestants &nbsp;·&nbsp;
+    🥚 <strong>${count}</strong> contestants &nbsp;·&nbsp;
     📋 <strong>${rounds}</strong> rounds &nbsp;·&nbsp;
     ${byes > 0 ? `⏩ <strong>${byes}</strong> first-round bye${byes > 1 ? 's' : ''} &nbsp;·&nbsp;` : ''}
-    🏆 <strong>${total - 1}</strong> total matches`;
+    🏆 <strong>${count - 1}</strong> total matches`;
+
+  // Show/hide the roll button depending on whether byes are needed
+  $('btn-egg-roll').style.display = byes > 0 ? '' : 'none';
 }
 
 // ── Bracket generation ─────────────────────────────────────
@@ -469,6 +542,8 @@ function restart() {
   state.completedMatches = 0;
   state.status           = 'setup';
   state.history          = [];
+  state.rollScores       = null;
+  $('egg-roll-section').classList.add('hidden');
   clearSave();
   renderPlayerList();
   showScreen('setup');
@@ -496,6 +571,8 @@ function bindEvents() {
       saveState();
     }
   });
+  $('btn-egg-roll').addEventListener('click', doEggRoll);
+  $('btn-reroll').addEventListener('click', doEggRoll);
   $('btn-start').addEventListener('click', startTournament);
 
   // Tournament

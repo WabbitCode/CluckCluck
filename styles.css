@@ -276,7 +276,63 @@ body {
 }
 .bracket-info.hidden { display: none; }
 
-.start-section { padding: 0 16px; }
+.start-section { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.start-buttons { display: flex; flex-direction: column; gap: 10px; }
+
+.btn-egg-roll-trigger {
+  font-size: 1rem;
+  padding: 12px 24px;
+  border: 2px solid var(--shell-border);
+  justify-content: center;
+}
+
+/* Egg roll panel */
+.egg-roll-section {
+  background: var(--shell);
+  border: 2px solid var(--shell-border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+}
+.egg-roll-section.hidden { display: none; }
+.egg-roll-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.egg-roll-title { font-weight: 700; font-size: 0.95rem; color: var(--text-dark); }
+.egg-roll-hint  { font-size: 0.78rem; color: var(--text-light); }
+
+/* Player list — bye badge & score */
+.player-item .bye-badge {
+  background: linear-gradient(135deg, #0D47A1, #42A5F5);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+.player-item .roll-score {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-light);
+  min-width: 28px;
+  text-align: right;
+}
+.player-item.has-bye {
+  background: #E3F2FD;
+  border-color: var(--blue);
+}
+@keyframes scoreReveal {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.roll-score { animation: scoreReveal 0.3s ease both; }
 
 /* ── Tournament Screen ─────────────────────────────── */
 .tournament-main { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }

@@ -40,10 +40,22 @@
 
       <section class="start-section">
         <div id="bracket-info" class="bracket-info hidden"></div>
-        <button id="btn-start" class="btn btn-start" disabled>
-          <span>🌷 Crack the Shell — Start Tournament!</span>
-          <span class="btn-egg">🐰</span>
-        </button>
+
+        <div id="egg-roll-section" class="egg-roll-section hidden">
+          <div class="egg-roll-header">
+            <span class="egg-roll-title">🥚 Egg Roll — Who gets a bye?</span>
+            <button id="btn-reroll" class="btn btn-secondary">Re-roll 🎲</button>
+          </div>
+          <p class="egg-roll-hint">Each egg was rolled — top scorers earn a bye to the next round!</p>
+        </div>
+
+        <div class="start-buttons">
+          <button id="btn-egg-roll" class="btn btn-secondary btn-egg-roll-trigger" disabled>Roll for Byes 🥚</button>
+          <button id="btn-start" class="btn btn-start" disabled>
+            <span>🌷 Crack the Shell — Start Tournament!</span>
+            <span class="btn-egg">🐰</span>
+          </button>
+        </div>
       </section>
     </main>
   </div>
