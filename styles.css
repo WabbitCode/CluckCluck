@@ -523,7 +523,7 @@ body {
   border-radius: 999px;
   border: 2px solid rgba(100,181,246,0.5);
 }
-.winner-subtitle { font-size: 1rem; color: var(--text-mid); max-width: 320px; }
+.winner-subtitle { font-size: 1rem; color: #0D47A1; font-weight: 600; max-width: 320px; }
 .winner-actions  { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
 
 /* Confetti — blue & teal Easter palette */
