@@ -114,27 +114,33 @@ function renderPlayerList() {
 
 // ── Bracket generation ─────────────────────────────────────
 function generateBracket(players) {
-  const size  = nextPowerOf2(players.length);
-  const byes  = size - players.length;
+  const size           = nextPowerOf2(players.length);
+  const byes           = size - players.length;
+  // Number of round-0 matches where both slots are real players
+  const realMatchCount = players.length - size / 2;
 
-  // Seed slots: real players fill from top, null = bye slot
-  const seeds = [...players];
-  while (seeds.length < size) seeds.push(null);
-
-  // Round 0 matches
   const round0 = [];
-  for (let i = 0; i < size; i += 2) {
-    const p1  = seeds[i];
-    const p2  = seeds[i + 1];
-    const bye = p2 === null || p1 === null;
+  let pi = 0;
+
+  // Real matches (two players each)
+  for (let i = 0; i < realMatchCount; i++) {
     round0.push({
-      id:     uid(),
-      round:  0,
-      p1:     p1 ? { ...p1 } : null,
-      p2:     p2 ? { ...p2 } : null,
-      winner: bye ? (p1 || p2) : null,
-      loser:  null,
-      status: bye ? 'bye' : 'pending',
+      id: uid(), round: 0,
+      p1: { ...players[pi++] },
+      p2: { ...players[pi++] },
+      winner: null, loser: null,
+      status: 'pending',
+    });
+  }
+
+  // Bye matches (one real player, one empty slot — never null vs null)
+  for (let i = 0; i < byes; i++) {
+    const p = players[pi++];
+    round0.push({
+      id: uid(), round: 0,
+      p1: { ...p }, p2: null,
+      winner: { ...p }, loser: null,
+      status: 'bye',
     });
   }
 
@@ -146,9 +152,8 @@ function generateBracket(players) {
     const next = [];
     for (let i = 0; i < prev.length; i += 2) {
       next.push({
-        id:     uid(),
-        round:  rounds.length,
-        p1:     null, p2: null,
+        id: uid(), round: rounds.length,
+        p1: null, p2: null,
         winner: null, loser: null,
         status: 'pending',
       });
@@ -161,7 +166,9 @@ function generateBracket(players) {
 }
 
 function propagateByes(rounds) {
-  // Fill in winners from round 0 byes into round 1
+  // Push each round-0 bye winner into the correct slot in round 1.
+  // With the new layout every bye match has exactly one real player,
+  // so no null-vs-null chains can occur and no cascade is needed.
   rounds[0].forEach((match, idx) => {
     if (match.status === 'bye' && rounds.length > 1) {
       const nextMatch = rounds[1][Math.floor(idx / 2)];
@@ -169,29 +176,6 @@ function propagateByes(rounds) {
       nextMatch[slot] = match.winner;
     }
   });
-
-  // Check if round 1 also has auto-wins (if only one player in a pair)
-  if (rounds.length > 1) {
-    rounds[1].forEach((match, idx) => {
-      if (match.p1 && !match.p2) {
-        match.winner = match.p1;
-        match.status = 'bye';
-        if (rounds.length > 2) {
-          const nextMatch = rounds[2][Math.floor(idx / 2)];
-          const slot      = idx % 2 === 0 ? 'p1' : 'p2';
-          nextMatch[slot] = match.winner;
-        }
-      } else if (!match.p1 && match.p2) {
-        match.winner = match.p2;
-        match.status = 'bye';
-        if (rounds.length > 2) {
-          const nextMatch = rounds[2][Math.floor(idx / 2)];
-          const slot      = idx % 2 === 0 ? 'p1' : 'p2';
-          nextMatch[slot] = match.winner;
-        }
-      }
-    });
-  }
 }
 
 // ── Tournament start ───────────────────────────────────────
