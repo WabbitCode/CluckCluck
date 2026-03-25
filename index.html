@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐰 CluckCluck — Easter Egg Cracking Tournament</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- SETUP SCREEN -->
+  <div id="screen-setup" class="screen active">
+    <header class="app-header">
+      <div class="logo">🐰 CluckCluck 🥚</div>
+      <div class="logo-sub">Easter Egg Cracking Tournament</div>
+    </header>
+
+    <main class="setup-main">
+      <section class="add-player-section card">
+        <h2>Add Contestants</h2>
+        <div class="input-row">
+          <input id="player-input" type="text" placeholder="Contestant name..." maxlength="30" autocomplete="off" />
+          <button id="btn-add-player" class="btn btn-primary">Add 🥚</button>
+        </div>
+        <p class="hint">Press Enter or click Add. Min 2 contestants to start.</p>
+      </section>
+
+      <section class="players-section card">
+        <div class="players-header">
+          <h2>Contestants <span id="player-count" class="badge">0</span></h2>
+          <div class="players-actions">
+            <button id="btn-shuffle" class="btn btn-secondary" disabled>Shuffle 🔀</button>
+            <button id="btn-clear-all" class="btn btn-danger-sm" disabled>Clear All</button>
+          </div>
+        </div>
+        <ul id="player-list" class="player-list">
+          <li class="empty-state">No contestants yet. Add some above!</li>
+        </ul>
+      </section>
+
+      <section class="start-section">
+        <div id="bracket-info" class="bracket-info hidden"></div>
+        <button id="btn-start" class="btn btn-start" disabled>
+          <span>🌷 Crack the Shell — Start Tournament!</span>
+          <span class="btn-egg">🐰</span>
+        </button>
+      </section>
+    </main>
+  </div>
+
+  <!-- TOURNAMENT SCREEN -->
+  <div id="screen-tournament" class="screen">
+    <header class="app-header">
+      <button id="btn-back-setup" class="btn btn-ghost">← Setup</button>
+      <div class="logo">🥚 CluckCluck</div>
+      <div id="round-label" class="round-label">Round 1</div>
+    </header>
+
+    <main class="tournament-main">
+
+      <!-- Progress -->
+      <section class="progress-section card">
+        <div class="progress-info">
+          <span id="progress-text">Match 1 of 4</span>
+          <span id="progress-round">Round 1</span>
+        </div>
+        <div class="progress-bar-track">
+          <div id="progress-bar-fill" class="progress-bar-fill" style="width:0%"></div>
+        </div>
+      </section>
+
+      <!-- Active Match -->
+      <section id="active-match-section" class="active-match-section card">
+        <div class="active-match-label">⚔️ Current Battle</div>
+        <div class="battle-arena">
+          <div class="battler battler-left" id="battler-p1">
+            <div class="egg-icon" id="egg-p1">🥚</div>
+            <div class="battler-name" id="name-p1">Player 1</div>
+            <button class="btn btn-crack btn-crack-left" id="btn-p1-cracked">
+              My egg cracked! 💥
+            </button>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="battler battler-right" id="battler-p2">
+            <div class="egg-icon" id="egg-p2">🥚</div>
+            <div class="battler-name" id="name-p2">Player 2</div>
+            <button class="btn btn-crack btn-crack-right" id="btn-p2-cracked">
+              My egg cracked! 💥
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bye message (shown when auto-advancing) -->
+      <section id="bye-section" class="bye-section card hidden">
+        <div class="bye-content">
+          <div class="bye-egg">🥚</div>
+          <div class="bye-text">
+            <strong id="bye-player-name">Player</strong> gets a bye — advancing automatically!
+          </div>
+          <button id="btn-confirm-bye" class="btn btn-primary">Continue →</button>
+        </div>
+      </section>
+
+      <!-- Bracket -->
+      <section class="bracket-section card">
+        <h2>Tournament Bracket</h2>
+        <div id="bracket-container" class="bracket-container"></div>
+      </section>
+
+      <!-- Match History -->
+      <section class="history-section card">
+        <h2>Match History</h2>
+        <ul id="history-list" class="history-list">
+          <li class="empty-state">No results yet.</li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- WINNER SCREEN -->
+  <div id="screen-winner" class="screen">
+    <div id="confetti-container" class="confetti-container"></div>
+    <div class="winner-content">
+      <div class="winner-crown">👑</div>
+      <div class="winner-egg">🥚</div>
+      <h1 class="winner-title">Champion!</h1>
+      <div class="winner-name" id="winner-name">Player</div>
+      <p class="winner-subtitle">🌸 The last uncracked Easter egg! 🌸</p>
+      <div class="winner-actions">
+        <button id="btn-restart" class="btn btn-start">🔄 New Tournament</button>
+        <button id="btn-view-bracket" class="btn btn-secondary">View Bracket</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
