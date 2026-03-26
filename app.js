@@ -76,6 +76,34 @@ function shufflePlayers() {
   renderPlayerList();
 }
 
+// ── Egg Roll facts ──────────────────────────────────────────
+const ROLL_FACTS = [
+  n => `🔍 Scanning ${n}'s eggshell thickness records...`,
+  n => `📊 Reviewing ${n}'s 2025 äggpickning season stats...`,
+  n => `🐰 Asking the Easter Bunny for his opinion on ${n}...`,
+  n => `💪 Stress-testing ${n}'s grip strength on a scale of 1–100...`,
+  n => `🌡️ Measuring thermal resilience of ${n}'s egg under pressure...`,
+  n => `🧬 Analyzing ${n}'s eggshell calcium density (very scientific)...`,
+  n => `📈 Cross-referencing ${n}'s win rate from last Easter Sunday...`,
+  n => `🎯 Evaluating ${n}'s precision cracking angle and follow-through...`,
+  n => `🌟 Checking if ${n} appears in the Swedish Äggpickning Hall of Fame...`,
+  n => `🔬 Running lab tests on ${n}'s shell composition in the egg lab...`,
+  n => `🏆 Counting ${n}'s historical trophy cabinet (taking a while)...`,
+  n => `🥚 Measuring the roundness of ${n}'s egg — very important metric...`,
+  n => `📡 Pinging the Swedish Egg Federation database about ${n}...`,
+  n => `🎲 Factoring in ${n}'s lucky number, birth month, and star sign...`,
+  n => `🌈 Checking whether ${n}'s egg was hand-painted this season...`,
+  n => `⚡ Calculating ${n}'s cracking force coefficient (advanced physics)...`,
+  n => `🦆 Interviewing ${n}'s chicken for insider performance data...`,
+  n => `🌸 Assessing ${n}'s spring equinox energy levels...`,
+  n => `🎨 Judging the artistic quality of ${n}'s egg decoration...`,
+  n => `🏋️ Reviewing ${n}'s off-season egg hardening training regimen...`,
+  n => `🧪 Subjecting ${n}'s egg to the patented CluckCluck durability test...`,
+  n => `📻 Consulting the ancient Påskägg prophecy scrolls about ${n}...`,
+  n => `🌍 Checking ${n}'s altitude — higher eggs crack differently...`,
+  n => `🥄 Estimating how many spoonfuls of determination ${n} has...`,
+];
+
 // ── Egg Roll (bye seeding) ──────────────────────────────────
 function doEggRoll() {
   const n    = state.players.length;
@@ -93,26 +121,59 @@ function doEggRoll() {
   $('btn-reroll').disabled   = true;
   $('btn-start').disabled    = true;
 
+  // Show overlay immediately with first fact
+  const overlay  = $('egg-roll-overlay');
+  const factEl   = $('egg-roll-fact');
+  overlay.classList.remove('hidden');
+
+  let factIdx   = 0;
+  let playerIdx = 0;
+  function showNextFact() {
+    factEl.classList.add('fade');
+    setTimeout(() => {
+      const player = rolls[playerIdx % rolls.length].player;
+      factEl.textContent = ROLL_FACTS[factIdx % ROLL_FACTS.length](player.name);
+      factEl.classList.remove('fade');
+      factIdx++;
+      playerIdx++;
+    }, 150);
+  }
+  showNextFact();
+  const factInterval = setInterval(showNextFact, 420);
+
+  // Score scramble flashes in background
   let flashes = 0;
-  const maxFlashes = 14;
+  const maxFlashes = 28;
   const interval = setInterval(() => {
     const temp = rolls.map(r => ({ ...r, score: Math.floor(Math.random() * 100) + 1 }));
     renderRolls(temp, byes);
     flashes++;
     if (flashes >= maxFlashes) {
       clearInterval(interval);
-      // Highest score = best = earns bye; sort descending
+      clearInterval(factInterval);
+
+      // Settle: highest score earns bye
       rolls.sort((a, b) => b.score - a.score);
-      // Bye players FIRST in array (generateBracket gives byes to first N players)
       const byePlayers  = rolls.slice(0, byes).map(r => r.player);
       const restPlayers = rolls.slice(byes).map(r => r.player);
       state.players    = [...byePlayers, ...restPlayers];
       state.rollScores = rolls;
-      renderRolls(rolls, byes);
-      $('egg-roll-section').classList.remove('hidden');
-      $('btn-egg-roll').disabled = false;
-      $('btn-reroll').disabled   = false;
-      $('btn-start').disabled    = false;
+
+      // Show final result fact before closing
+      factEl.classList.add('fade');
+      setTimeout(() => {
+        factEl.textContent = `✅ All ${rolls.length} eggs have been evaluated. Results are in!`;
+        factEl.classList.remove('fade');
+      }, 150);
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        renderRolls(rolls, byes);
+        $('egg-roll-section').classList.remove('hidden');
+        $('btn-egg-roll').disabled = false;
+        $('btn-reroll').disabled   = false;
+        $('btn-start').disabled    = false;
+      }, 900);
     }
   }, 80);
 }
