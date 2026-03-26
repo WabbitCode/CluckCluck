@@ -130,11 +130,9 @@ function doEggRoll() {
   overlay.classList.remove('hidden');
 
   // Cap at 5 quotes; each shown for 3 s — total duration drives everything
-  const numQuotes    = Math.min(rolls.length, 5);
-  const msPerQuote   = 3500;
-  const totalMs      = numQuotes * msPerQuote;
-  const flashMs      = 80;
-  const maxFlashes   = Math.ceil(totalMs / flashMs);
+  const numQuotes  = Math.min(rolls.length, 5);
+  const msPerQuote = 3500;
+  const totalMs    = numQuotes * msPerQuote;
 
   // Pre-pick which player+fact pairs to show (no repeats of same player back-to-back)
   const shuffledRolls = [...rolls].sort(() => Math.random() - 0.5);
