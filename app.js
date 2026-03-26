@@ -121,7 +121,10 @@ function doEggRoll() {
   $('btn-reroll').disabled   = true;
   $('btn-start').disabled    = true;
 
-  // Show overlay immediately with first fact
+  // Render list once with random starter scores (builds data-pid elements)
+  renderRolls(rolls.map(r => ({ ...r, score: Math.floor(Math.random() * 100) + 1 })), byes);
+
+  // Show overlay
   const overlay  = $('egg-roll-overlay');
   const factEl   = $('egg-roll-fact');
   overlay.classList.remove('hidden');
@@ -161,24 +164,28 @@ function doEggRoll() {
   showNextFact();
   const factInterval = setInterval(showNextFact, msPerQuote);
 
-  // Score scramble flashes in background (matches total duration)
+  // Score scramble — in-place updates, organic stagger per player
+  const flashMs  = 175;
+  const maxFlashesActual = Math.ceil(totalMs / flashMs);
   let flashes = 0;
   const interval = setInterval(() => {
-    const temp = rolls.map(r => ({ ...r, score: Math.floor(Math.random() * 100) + 1 }));
-    renderRolls(temp, byes);
+    flashScores(rolls); // each score updates independently with random delay
     flashes++;
-    if (flashes >= maxFlashes) {
+    if (flashes >= maxFlashesActual) {
       clearInterval(interval);
       clearInterval(factInterval);
 
-      // Settle: highest score earns bye
+      // Sort and settle
       rolls.sort((a, b) => b.score - a.score);
       const byePlayers  = rolls.slice(0, byes).map(r => r.player);
       const restPlayers = rolls.slice(byes).map(r => r.player);
       state.players    = [...byePlayers, ...restPlayers];
       state.rollScores = rolls;
 
-      // Show final result fact before closing
+      // Settle each score with a staggered elastic bounce
+      settleScores(rolls);
+
+      // Final overlay message
       factEl.classList.add('fade');
       setTimeout(() => {
         factEl.textContent = `✅ All ${rolls.length} eggs have been evaluated. Results are in!`;
@@ -188,13 +195,46 @@ function doEggRoll() {
       setTimeout(() => {
         overlay.classList.add('hidden');
         renderRolls(rolls, byes);
+        // Stagger-reveal the settled scores after list rebuilds
+        document.querySelectorAll('.roll-score').forEach((el, i) => {
+          el.style.animationDelay = `${i * 70}ms`;
+          el.classList.add('settling');
+        });
         $('egg-roll-section').classList.remove('hidden');
         $('btn-egg-roll').disabled = false;
         $('btn-reroll').disabled   = false;
         $('btn-start').disabled    = false;
       }, 2500);
     }
-  }, 80);
+  }, flashMs);
+}
+
+// Update each score element in-place — organic stagger, no full re-render
+function flashScores(rolls) {
+  rolls.forEach(r => {
+    setTimeout(() => {
+      const el = document.querySelector(`.roll-score[data-pid="${r.player.id}"]`);
+      if (!el) return;
+      el.classList.remove('ticking', 'settling');
+      void el.offsetWidth; // restart animation
+      el.textContent = `💪 ${Math.floor(Math.random() * 100) + 1}`;
+      el.classList.add('ticking');
+    }, Math.random() * 110);
+  });
+}
+
+// Land each score on its final value with an elastic bounce, staggered
+function settleScores(sortedRolls) {
+  sortedRolls.forEach((r, i) => {
+    setTimeout(() => {
+      const el = document.querySelector(`.roll-score[data-pid="${r.player.id}"]`);
+      if (!el) return;
+      el.classList.remove('ticking', 'settling');
+      void el.offsetWidth;
+      el.textContent = `💪 ${r.score}`;
+      el.classList.add('settling');
+    }, i * 90);
+  });
 }
 
 function renderRolls(rolls, byeCount) {
@@ -235,7 +275,7 @@ function renderPlayerList(byeCount = 0, scoreMap = null) {
       <span class="player-seed">#${i + 1}</span>
       <span class="player-emoji">${p.emoji}</span>
       <span class="player-name">${escHtml(p.name)}</span>
-      ${score !== null ? `<span class="roll-score" title="Egg Power rating">💪 ${score}</span>` : ''}
+      ${score !== null ? `<span class="roll-score" data-pid="${p.id}" title="Egg Power rating">💪 ${score}</span>` : ''}
       ${hasBye ? `<span class="bye-badge">BYE 🎟️</span>` : ''}
       <button class="btn-remove" data-id="${p.id}" title="Remove">✕</button>
     </li>`;
