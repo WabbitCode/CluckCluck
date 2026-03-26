@@ -139,11 +139,11 @@ function doEggRoll() {
     }, 150);
   }
   showNextFact();
-  const factInterval = setInterval(showNextFact, 420);
+  const factInterval = setInterval(showNextFact, 1100);
 
   // Score scramble flashes in background
   let flashes = 0;
-  const maxFlashes = 28;
+  const maxFlashes = 55;
   const interval = setInterval(() => {
     const temp = rolls.map(r => ({ ...r, score: Math.floor(Math.random() * 100) + 1 }));
     renderRolls(temp, byes);
@@ -173,7 +173,7 @@ function doEggRoll() {
         $('btn-egg-roll').disabled = false;
         $('btn-reroll').disabled   = false;
         $('btn-start').disabled    = false;
-      }, 900);
+      }, 1800);
     }
   }, 80);
 }
