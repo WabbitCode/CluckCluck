@@ -128,7 +128,7 @@ function doEggRoll() {
 
   // Cap at 5 quotes; each shown for 3 s — total duration drives everything
   const numQuotes    = Math.min(rolls.length, 5);
-  const msPerQuote   = 3000;
+  const msPerQuote   = 3500;
   const totalMs      = numQuotes * msPerQuote;
   const flashMs      = 80;
   const maxFlashes   = Math.ceil(totalMs / flashMs);
@@ -192,7 +192,7 @@ function doEggRoll() {
         $('btn-egg-roll').disabled = false;
         $('btn-reroll').disabled   = false;
         $('btn-start').disabled    = false;
-      }, 1800);
+      }, 2500);
     }
   }, 80);
 }
