@@ -126,24 +126,43 @@ function doEggRoll() {
   const factEl   = $('egg-roll-fact');
   overlay.classList.remove('hidden');
 
-  let factIdx   = 0;
-  let playerIdx = 0;
+  // Cap at 5 quotes; each shown for 3 s — total duration drives everything
+  const numQuotes    = Math.min(rolls.length, 5);
+  const msPerQuote   = 3000;
+  const totalMs      = numQuotes * msPerQuote;
+  const flashMs      = 80;
+  const maxFlashes   = Math.ceil(totalMs / flashMs);
+
+  // Pre-pick which player+fact pairs to show (no repeats of same player back-to-back)
+  const shuffledRolls = [...rolls].sort(() => Math.random() - 0.5);
+  const queue = Array.from({ length: numQuotes }, (_, i) => ({
+    player: shuffledRolls[i % shuffledRolls.length].player,
+    fact:   ROLL_FACTS[Math.floor(Math.random() * ROLL_FACTS.length)],
+  }));
+  // Make sure each fact template is unique
+  const usedFacts = new Set();
+  queue.forEach(q => {
+    let fn = q.fact;
+    while (usedFacts.has(fn)) fn = ROLL_FACTS[Math.floor(Math.random() * ROLL_FACTS.length)];
+    q.fact = fn;
+    usedFacts.add(fn);
+  });
+
+  let quoteIdx = 0;
   function showNextFact() {
+    if (quoteIdx >= queue.length) return;
     factEl.classList.add('fade');
     setTimeout(() => {
-      const player = rolls[playerIdx % rolls.length].player;
-      factEl.textContent = ROLL_FACTS[factIdx % ROLL_FACTS.length](player.name);
+      const { player, fact } = queue[quoteIdx++];
+      factEl.textContent = fact(player.name);
       factEl.classList.remove('fade');
-      factIdx++;
-      playerIdx++;
-    }, 150);
+    }, 200);
   }
   showNextFact();
-  const factInterval = setInterval(showNextFact, 1100);
+  const factInterval = setInterval(showNextFact, msPerQuote);
 
-  // Score scramble flashes in background
+  // Score scramble flashes in background (matches total duration)
   let flashes = 0;
-  const maxFlashes = 55;
   const interval = setInterval(() => {
     const temp = rolls.map(r => ({ ...r, score: Math.floor(Math.random() * 100) + 1 }));
     renderRolls(temp, byes);
