@@ -81,16 +81,14 @@ function doEggRoll() {
   const n    = state.players.length;
   const size = nextPowerOf2(n);
   const byes = size - n;
+  if (byes === 0) return;
 
-  if (byes === 0) return; // no byes needed, nothing to roll for
-
-  // Assign random scores 1–100 to each player (no ties via tiebreak)
-  const scores = state.players.map((p, i) => ({
-    idx: i,
-    score: Math.floor(Math.random() * 100) + 1 + (Math.random() * 0.99),
+  // rolls: { player, score } — keyed by player object, no fragile index
+  const rolls = state.players.map(p => ({
+    player: { ...p },
+    score: Math.floor(Math.random() * 100) + 1,
   }));
 
-  // Animate: rapidly shuffle visible scores, then settle
   $('btn-egg-roll').disabled = true;
   $('btn-reroll').disabled   = true;
   $('btn-start').disabled    = true;
@@ -98,20 +96,19 @@ function doEggRoll() {
   let flashes = 0;
   const maxFlashes = 14;
   const interval = setInterval(() => {
-    // Show scrambled scores while animating
-    const temp = scores.map(s => ({ ...s, score: Math.floor(Math.random() * 100) + 1 }));
-    renderPlayerListWithScores(temp, byes);
+    const temp = rolls.map(r => ({ ...r, score: Math.floor(Math.random() * 100) + 1 }));
+    renderRolls(temp, byes);
     flashes++;
     if (flashes >= maxFlashes) {
       clearInterval(interval);
-      // Settle on real scores, sort descending
-      scores.sort((a, b) => b.score - a.score);
-      // Reorder players: top scorers first (they'll get byes), then rest
-      const byePlayers  = scores.slice(0, byes).map(s => state.players[s.idx]);
-      const restPlayers = scores.slice(byes).map(s => state.players[s.idx]);
-      state.players     = [...restPlayers, ...byePlayers];
-      state.rollScores  = scores; // store for display
-      renderPlayerListWithScores(scores, byes);
+      // Highest score = best = earns bye; sort descending
+      rolls.sort((a, b) => b.score - a.score);
+      // Bye players FIRST in array (generateBracket gives byes to first N players)
+      const byePlayers  = rolls.slice(0, byes).map(r => r.player);
+      const restPlayers = rolls.slice(byes).map(r => r.player);
+      state.players    = [...byePlayers, ...restPlayers];
+      state.rollScores = rolls;
+      renderRolls(rolls, byes);
       $('egg-roll-section').classList.remove('hidden');
       $('btn-egg-roll').disabled = false;
       $('btn-reroll').disabled   = false;
@@ -120,13 +117,10 @@ function doEggRoll() {
   }, 80);
 }
 
-function renderPlayerListWithScores(scores, byeCount) {
-  // Build a name→score map using the current player order
+function renderRolls(rolls, byeCount) {
+  // scoreMap keyed by player name — safe regardless of array order
   const scoreMap = {};
-  scores.forEach(s => {
-    scoreMap[state.players[s.idx]?.name] = Math.round(s.score);
-  });
-  // Re-render with scores; bye players are the LAST byeCount in state.players
+  rolls.forEach(r => { scoreMap[r.player.name] = r.score; });
   renderPlayerList(byeCount, scoreMap);
 }
 
@@ -153,7 +147,7 @@ function renderPlayerList(byeCount = 0, scoreMap = null) {
 
   // Bye players are the last `byeCount` in the current order
   list.innerHTML = state.players.map((p, i) => {
-    const hasBye  = byeCount > 0 && i >= state.players.length - byeCount;
+    const hasBye  = byeCount > 0 && i < byeCount;
     const score   = scoreMap ? scoreMap[p.name] : null;
     const liClass = hasBye ? 'player-item has-bye' : 'player-item';
     return `
@@ -161,7 +155,7 @@ function renderPlayerList(byeCount = 0, scoreMap = null) {
       <span class="player-seed">#${i + 1}</span>
       <span class="player-emoji">${p.emoji}</span>
       <span class="player-name">${escHtml(p.name)}</span>
-      ${score !== null ? `<span class="roll-score">🥚${score}</span>` : ''}
+      ${score !== null ? `<span class="roll-score" title="Egg Power rating">💪 ${score}</span>` : ''}
       ${hasBye ? `<span class="bye-badge">BYE 🎟️</span>` : ''}
       <button class="btn-remove" data-id="${p.id}" title="Remove">✕</button>
     </li>`;
@@ -193,9 +187,19 @@ function generateBracket(players) {
   const realMatchCount = players.length - size / 2;
 
   const round0 = [];
-  let pi = 0;
+  // Bye matches first: top-ranked players (first `byes` entries) get byes
+  for (let i = 0; i < byes; i++) {
+    const p = players[i];
+    round0.push({
+      id: uid(), round: 0,
+      p1: { ...p }, p2: null,
+      winner: { ...p }, loser: null,
+      status: 'bye',
+    });
+  }
 
-  // Real matches (two players each)
+  // Real matches: remaining players (after bye slots)
+  let pi = byes;
   for (let i = 0; i < realMatchCount; i++) {
     round0.push({
       id: uid(), round: 0,
@@ -203,17 +207,6 @@ function generateBracket(players) {
       p2: { ...players[pi++] },
       winner: null, loser: null,
       status: 'pending',
-    });
-  }
-
-  // Bye matches (one real player, one empty slot — never null vs null)
-  for (let i = 0; i < byes; i++) {
-    const p = players[pi++];
-    round0.push({
-      id: uid(), round: 0,
-      p1: { ...p }, p2: null,
-      winner: { ...p }, loser: null,
-      status: 'bye',
     });
   }
 
